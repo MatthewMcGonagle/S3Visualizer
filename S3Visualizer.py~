@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pylab
+
+ballradii = np.array([0.4, 0.9, 0.2])
+ballcenters = np.array([[0, 0, 0, 1.0]
+	               ,[0, 0, 1.0, 0]
+		       ,[0, np.sin(0.2*np.pi), 0, np.cos(0.2*np.pi)]])
+
+nspheres = len(ballradii)
+
+camposition = np.array([1.0, 0, 0, 0])
+camdirection = np.array([0, 0, 0, 1.0])
+camoffsetx = np.array([0, 2.0, 0, 0])
+camoffsety = np.array([0, 0, 2.0, 0])
+
+nvisualpoints = 200 
+visualpoints = [[0 for x in range(nvisualpoints)] for y in range(nvisualpoints)] 
+
+maxangle = 2*np.pi
+dangle = 2*np.pi/30 
+nangle = (int) (maxangle / dangle)
+failcolor = 0.0 
+
+def ballcolormap( i, position):
+	diff = position - ballcenters[i]
+	if i==0:
+
+		return 0.3+0.2*np.sin(diff[1]/ballradii[i]*2*np.pi)
+
+	elif i==1:
+
+		return 0.8+0.2*np.sin(diff[1]/ballradii[i]*np.pi)
+
+	elif i==2:
+
+		result = 0.6 + 0.1*np.sin(diff[2]/ballradii[i]*2*np.pi)
+		result += 0.1*np.sin(diff[3]/ballradii[i]*3*np.pi)
+		return result
+
+	else:
+		return 1.0
+
+def lightdir( i, j):
+	newdirection = camdirection + (i/nvisualpoints - 0.5)*camoffsetx
+	newdirection = newdirection + (j/nvisualpoints - 0.5)*camoffsety
+	size = np.linalg.norm(newdirection) 
+	newdirection = newdirection / size
+	return newdirection
+
+def colordirection( ldirection ):
+	position = camposition.copy()
+	angle = 0
+	color = failcolor
+	while angle < 2.1*np.pi and color==failcolor:	
+		position = np.cos(angle)*camposition
+		position += np.sin(angle)*ldirection
+		for j in range(len(ballcenters)):
+			if ( np.linalg.norm(position - ballcenters[j]) < ballradii[j]):
+				color = ballcolormap(j, position)
+		angle += dangle
+	return color
+		
+for i in range(nvisualpoints):
+	for j in range(nvisualpoints):
+		visualpoints[i][j] = colordirection( lightdir(i,j) )
+	if (i % (int(nvisualpoints/10)) == 0):
+		print("Finished processing visualpoints["+str(i)+"][:]")
+		
+xmesh, ymesh = np.meshgrid(np.array(range(nvisualpoints)),np.array(range(nvisualpoints))) 
+
+plt.pcolor(xmesh, ymesh, visualpoints, cmap = 'CMRmap')# vmin = 0.0, vmaz = 1.0)
+plt.show()
+
