@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pylab
+import time
 
 ballradii = np.array([0.4, 0.9, 0.2])
 ballcenters = np.array([[0, 0, 0, 1.0]
@@ -48,9 +49,9 @@ def lightdir( i, j):
 	newdirection = newdirection / size
 	return newdirection
 
-def colordirection( ldirection ):
+def colordirection( ldirection , lowbounddist):
 	position = camposition.copy()
-	angle = 0
+	angle = lowbounddist 
 	color = failcolor
 	while angle < maxangle and color==failcolor:	
 		position = np.cos(angle)*camposition
@@ -60,12 +61,33 @@ def colordirection( ldirection ):
 				color = ballcolormap(j, position)
 		angle += dangle
 	return color
+
+def spheredist(point1, point2):
+	dotproduct = 0
+	for i in range(4):
+		dotproduct += point1[i]*point2[i]
+	return np.arccos(dotproduct)
+
+def findlowbounddist(point):
+	lowbound = 2*np.pi
+	for i in range(len(ballcenters)):
+		current = spheredist(point, ballcenters[i])
+		current -= ballradii[i]
+		if current < lowbound:
+			lowbound = current
+	if lowbound < 0:
+		lowbound = 0
+	return lowbound
 		
+starttime = time.time()
 for i in range(nvisualpoints):
+	lowbound = findlowbounddist(camposition)
 	for j in range(nvisualpoints):
-		visualpoints[i][j] = colordirection( lightdir(i,j) )
+		visualpoints[i][j] = colordirection( lightdir(i,j), lowbound)
 	if (i % (int(nvisualpoints/10)) == 0):
 		print("Finished processing visualpoints["+str(i)+"][:]")
+endtime = time.time()
+print ("Time to finish is %s seconds" % (endtime - starttime))
 		
 xmesh, ymesh = np.meshgrid(np.array(range(nvisualpoints)),np.array(range(nvisualpoints))) 
 
