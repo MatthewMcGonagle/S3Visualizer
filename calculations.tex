@@ -18,8 +18,8 @@ Using that \(\{p,v\}\) is an orthonormal set of vectors in Euclidean space and t
 So we have intersection points if and only if there are solutions to 
 \[\langle p,q \rangle \cos(t) + \langle v, q\rangle \sin(t) = 1 - \frac{r^2}{2}. \]
 This is more informatively expressed as a dot product of vectors in \(\mathbb R^2\):
-\[\begin{pmatrix} \langle p,q\rangle \\ \langle v, q \rangle\end{pmatrix} \cdot \begin{pmatrix} \cos(t) \\ \sin(t) \end{pmatrix} = |1 - \frac{r^2}{2}|. \]
-Since the minimum and maximum of the dot product on the left hand side is \(\pm \|(\langle p,q\rangle, \langle v, q\rangle)\|\), we see that there is are intersection points if and only if \(\sqrt{\langle p,q\rangle^2 + \langle v,q\rangle^2} \geq 1 - r^2/2.\)
+\[\begin{pmatrix} \langle p,q\rangle \\ \langle v, q \rangle\end{pmatrix} \cdot \begin{pmatrix} \cos(t) \\ \sin(t) \end{pmatrix} = 1 - \frac{r^2}{2}. \]
+Since the minimum and maximum of the dot product on the left hand side is \(\pm \|(\langle p,q\rangle, \langle v, q\rangle)\|\), we see that there is are intersection points if and only if \(\sqrt{\langle p,q\rangle^2 + \langle v,q\rangle^2} \geq |1 - r^2/2|.\)
 
 Now let \((a,b)\) be the normalization of \((\langle p,q\rangle, \langle v, q\rangle)\), and let \(D = (1-r^2/2)(\langle p,q\rangle^2 + \langle v, q\rangle^2)^{-1/2}\). So our equation becomes
 \[\begin{pmatrix} a \\ b \end{pmatrix} \cdot \begin{pmatrix} cos(t) \\ sin(t) \end{pmatrix} = D.\] 
