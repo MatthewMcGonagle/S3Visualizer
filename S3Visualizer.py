@@ -3,6 +3,49 @@ import matplotlib.pyplot as plt
 import pylab
 import time
 
+# This is a class for storing information on the camera.
+# __init__ parameters:
+#     position = The position of the camera in S3. Must be a normalized unit vector.
+#     direction = The direction of the camera in S3. Must be a normalized unit vector that
+#            is orthogonal to position.
+#     horizontaldir = The direction that corresponds to horizontal motion on screen. Must be a normalized unit vector.
+#           Should be orthogonal to position.
+#     verticaldir = The direction that corresponds to vertical motion on screen. Must be a normalized unit vector.
+#           Should be orthogonal to position.
+#     viewangle = Angle in radians that camera can see in the horizontal and vertical directions.
+#     npoints = Number of points to process in horizontal direction and also in vertical direction. So
+#          to process the camera's view, npoints**2 points will be processed.
+
+class Camera:
+	def __init__(self, position, direction, horizontaldir, verticaldir, viewangle, npoints):
+		self.position = position
+		self.direction = direction
+		self.horizontaldir = horizontaldir
+		self.verticaldir = verticaldir
+		self.viewangle = viewangle
+		self.lengthdifference = np.tan(viewangle/2.0)
+		self.hoffset = self.lengthdifference*horizontaldir 
+		self.voffset = self.lengthdifference*verticaldir 
+		self.npoints = npoints
+
+	def lightdir(self, i, j):
+		self.lightdirection = self.direction + (i/self.npoints - 0.5)*self.hoffset
+		self.lightdirection = self.lightdirection + (j/self.npoints - 0.5)*self.voffset
+		self.size = np.linalg.norm(self.lightdirection) 
+		self.lightdirection = self.lightdirection / self.size
+		return self.lightdirection
+
+
+# Class for storing information of Ball in S3
+# __init__ parameters:
+#     center = The position of the center of the ball in S3. Must be a normalized unit vector.
+#     radius = The Euclidean radius of the ball. That is the radius of the straight line distance in R4.
+
+class Ball:
+	def __init__(self, center, radius):
+		self.center = center
+		self.radius = radius
+
 ballradii = np.array([0.4, 0.9, 0.2])
 ballcenters = np.array([[0, 0, 0, 1.0]
 	               ,[0, 0, 1.0, 0]
@@ -12,11 +55,13 @@ nspheres = len(ballradii)
 
 camposition = np.array([1.0, 0, 0, 0])
 camdirection = np.array([0, 0, 0, 1.0])
-camoffsetx = np.array([0, 2.0, 0, 0])
-camoffsety = np.array([0, 0, 2.0, 0])
+hdirection = np.array([0, 1.0, 0, 0])
+vdirection = np.array([0, 0, 1.0, 0])
+viewangle = np.pi / 4 * 3
+npoints = 200
+mycam = Camera(camposition, camdirection, hdirection, vdirection, viewangle, npoints)
 
-nvisualpoints = 300 
-visualpoints = [[0 for x in range(nvisualpoints)] for y in range(nvisualpoints)] 
+visualpoints = [[0 for x in range(npoints)] for y in range(npoints)] 
 
 maxangle = 2*np.pi
 dangle = 2*np.pi/30 
@@ -24,10 +69,9 @@ nangle = (int) (maxangle / dangle)
 failcolor = 0.0 
 
 def ballcolormap( i, position):
-	diff = [0,0,0,0]
+	diff = np.array([0.0, 0.0, 0.0, 0.0])
 	myresultwhat = 0.0
-	for j in range(4):
-		diff[j] = position[j] - ballcenters[i][j]
+	diff = position - ballcenters[i]
 	if i==0:
 
 		myresultwhat = 0.3+0.2*np.sin(diff[1]/ballradii[i]*2*np.pi)
@@ -102,10 +146,10 @@ def solvecirclepoint(xcoord, ycoord):
 
 
 def findintersectball(cposition, ldirection, bcenter, bradius):
-	failintersect = [0.0, 0.0, 0.0, 0.0]
+	failintersect = np.array([0.0, 0.0, 0.0, 0.0])
 	failt = -1.0
 	t = [0.0, 0.0]
-	result = [0.0, 0.0, 0.0, 0.0]
+	result = np.array([0.0, 0.0, 0.0, 0.0])
 	prodcpos = 0
 	prodcdir = 0
 	for i in range(4):
@@ -142,28 +186,29 @@ def findintersectball(cposition, ldirection, bcenter, bradius):
 
 	
 starttime = time.time()
-for i in range(nvisualpoints):
+for i in range(npoints):
 	lowbound = findlowbounddist(camposition)
-	for j in range(nvisualpoints):
+	for j in range(npoints):
 		minintersectangle = -1.0
 		intersectsphere = -1
+		currentlight = mycam.lightdir(i,j)
 		for k in range(len(ballcenters)):
-			newangle = findintersectball( camposition, lightdir(i,j), ballcenters[k], ballradii[k])
+			newangle = findintersectball( mycam.position, currentlight, ballcenters[k], ballradii[k])
 			if newangle > 0 and (newangle < minintersectangle or minintersectangle < 0):
 				minintersectangle = newangle
 				intersectsphere = k
 		if minintersectangle >= 0:
-			intersect = np.cos(minintersectangle)*camposition + np.sin(minintersectangle)*lightdir(i,j)
+			intersect = np.cos(minintersectangle)*mycam.position + np.sin(minintersectangle)*currentlight
 			visualpoints[i][j] = ballcolormap(intersectsphere, intersect)
 		else:
 			visualpoints[i][j] = failcolor
 		#visualpoints[i][j] = colordirection( lightdir(i,j), lowbound)
-	if (i % (int(nvisualpoints/10)) == 0):
+	if (i % (int(npoints/10)) == 0):
 		print("Finished processing visualpoints["+str(i)+"][:]")
 endtime = time.time()
 print ("Time to finish is %s seconds" % (endtime - starttime))
 		
-xmesh, ymesh = np.meshgrid(np.array(range(nvisualpoints)),np.array(range(nvisualpoints))) 
+xmesh, ymesh = np.meshgrid(np.array(range(npoints)),np.array(range(npoints))) 
 
 plt.pcolor(xmesh, ymesh, visualpoints, cmap = 'CMRmap')# vmin = 0.0, vmaz = 1.0)
 plt.show()
