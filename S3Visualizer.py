@@ -15,6 +15,12 @@ import time
 #     viewangle = Angle in radians that camera can see in the horizontal and vertical directions.
 #     npoints = Number of points to process in horizontal direction and also in vertical direction. So
 #          to process the camera's view, npoints**2 points will be processed.
+#
+# Member Functions:
+# lightdir(self, i, j)
+# Purpose: Returns normalized vector in tangent space to S3 at position. The vector comes from specifying i and j.
+# Parameters: i is an integer such that 0 <= i < npoints. Controls horizontal movement in camera's vision.
+#             j is an integer such that 0 <= j < npoints. Controls vertical movement in camera's vision.
 
 class Camera:
 	def __init__(self, position, direction, horizontaldir, verticaldir, viewangle, npoints):
@@ -55,31 +61,21 @@ class S3:
 			dotproduct += point1[i]*point2[i]
 		return np.arccos(dotproduct)
 
-maxangle = 2*np.pi
-dangle = 2*np.pi/30 
-nangle = (int) (maxangle / dangle)
-failcolor = 0.0 
+# Function: findintersectball
+# Purpose: Find the angle (in radians) of the intersection of a light ray starting at camera's position in a particular direction with a particular ball. If there is an intersection then the returned angle is between 0 and 2*np.pi.
+# Parameters: cposition is a vector of the camera's current position.
+#             ldirection is the direction of the light ray.
+#             ball is the ball for detecting the intersection.
 
-def colordirection( ldirection , lowbounddist):
-	position = camposition.copy()
-	angle = lowbounddist 
-	color = failcolor
-	while angle < maxangle and color==failcolor:	
-		position = np.cos(angle)*camposition
-		position += np.sin(angle)*ldirection
-		for j in range(len(ballcenters)):
-			if ( np.linalg.norm(position - ballcenters[j]) < ballradii[j]):
-				color = ballcolormap(j, position)
-		angle += dangle
-	return color
-
-def findintersectball(cposition, ldirection, bcenter, bradius):
+def findintersectball(cposition, ldirection, ball):
+	bcenter = ball.center
+	bradius = ball.radius
 	failintersect = np.array([0.0, 0.0, 0.0, 0.0])
 	failt = -1.0
 	t = [0.0, 0.0]
 	result = np.array([0.0, 0.0, 0.0, 0.0])
-	prodcpos = 0
-	prodcdir = 0
+	prodcpos = 0.0
+	prodcdir = 0.0
 	for i in range(4):
 
 		prodcpos += cposition[i]*bcenter[i]
@@ -91,7 +87,7 @@ def findintersectball(cposition, ldirection, bcenter, bradius):
 		return failt
 
 	D = (1 - 0.5 * bradius**2) / magnitude
-	if D**2 > 1: 
+	if D**2 > 1.0: 
 
 		return failt
 
